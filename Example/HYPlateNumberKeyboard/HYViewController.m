@@ -55,6 +55,7 @@
     [self.textField reloadInputViews];
     
     self.keyboard.textfield = self.textField;
+    self.keyboard.delegate = self;
     
     //submitBtn
     [self.view addSubview:self.submitBtn];
