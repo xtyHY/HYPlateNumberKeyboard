@@ -1,29 +1,49 @@
 # HYPlateNumberKeyboard
 
-[![CI Status](http://img.shields.io/travis/xtyHY/HYPlateNumberKeyboard.svg?style=flat)](https://travis-ci.org/xtyHY/HYPlateNumberKeyboard)
-[![Version](https://img.shields.io/cocoapods/v/HYPlateNumberKeyboard.svg?style=flat)](http://cocoapods.org/pods/HYPlateNumberKeyboard)
-[![License](https://img.shields.io/cocoapods/l/HYPlateNumberKeyboard.svg?style=flat)](http://cocoapods.org/pods/HYPlateNumberKeyboard)
-[![Platform](https://img.shields.io/cocoapods/p/HYPlateNumberKeyboard.svg?style=flat)](http://cocoapods.org/pods/HYPlateNumberKeyboard)
+## 简介
+用于输入车牌号的自定义键盘实现
 
-## Example
+## 样例
+前往Exmaple目录，并执行`pod install`指令后打开项目
 
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
+预览图：
+![Exmaple-Gif](https://github.com/xtyHY/HYPlateNumberKeyboard/raw/master/keyboard.gif)
 
-## Requirements
+## 使用方式
 
-## Installation
+### 配置键盘
+```
+// 初始化
+self.keyboard = [HYPlateNumberKeyboard keyboard];
 
-HYPlateNumberKeyboard is available through [CocoaPods](http://cocoapods.org). To install
-it, simply add the following line to your Podfile:
+// 设置textField自定义键盘
+self.textField.inputView = self.keyboard;
+self.textField.inputAccessoryView = self.keyboard.toolBar;
+[self.textField reloadInputViews];
 
-```ruby
-pod 'HYPlateNumberKeyboard'
+// 将textField传递给键盘对象
+self.keyboard.textfield = self.textField;
+
+// 设置delegate
+self.keyboard.delegate = self;
 ```
 
-## Author
+### 代理方法
+```
+- (void)HYPlateNumberKeyboard:(HYPlateNumberKeyboard *)keyboard
+                   didChanged:(UITextField *)textfield {
+    NSLog(@"Keyboard----->Changed: %@", textfield.text);
+}
 
-xtyHY, devhy@foxmail.com
+- (void)HYPlateNumberKeyboard:(HYPlateNumberKeyboard *)keyboard
+                   clickClose:(UITextField *)textfield {
+    NSLog(@"Keyboard----->Close: %@", textfield.text);
+}
 
-## License
+- (void)HYPlateNumberKeyboard:(HYPlateNumberKeyboard *)keyboard
+                   clickDelete:(UITextField *)textfield {
+    NSLog(@"Keyboard----->Delete: %@", textfield.text);
+}
+```
 
-HYPlateNumberKeyboard is available under the MIT license. See the LICENSE file for more info.
+
