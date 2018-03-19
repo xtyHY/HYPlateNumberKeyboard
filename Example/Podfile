@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'HYPlateNumberKeyboard_Example' do
+  pod 'HYPlateNumberKeyboard', :path => '../'
+
+  target 'HYPlateNumberKeyboard_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
