@@ -126,8 +126,10 @@ static NSArray<NSString *> *alphabets;
         return;
     }
     
+    //使用UITextInput中的方法来实现插入文字，这样可以支持当前光标位置进行插入文字
     NSString *string = self.dataArr[indexPath.row];
-    self.textfield.text = [self.textfield.text stringByAppendingString:string];
+    [self.textfield replaceRange:self.textfield.selectedTextRange withText:string];
+    
     if (self.textfield.text.length==1) {//>1切换成字母键盘
         [self reloadKeyboard];
     }
@@ -157,16 +159,20 @@ static NSArray<NSString *> *alphabets;
 
 - (void)clickDelete:(id)sender {
     
-    if (self.textfield.text.length) {
-        self.textfield.text = [self.textfield.text substringToIndex:self.textfield.text.length-1];
-        if (!self.textfield.text.length) {//==0时切换成省份键盘
-            [self reloadKeyboard];
-        }
-        
-        if (self.delegate && [self.delegate respondsToSelector:@selector(HYPlateNumberKeyboard:didChanged:)]) {
-            [self.delegate HYPlateNumberKeyboard:self
-                                      didChanged:self.textfield];
-        }
+    if (!self.textfield.text.length) {
+        return;
+    }
+    
+    //使用UITextInput的方法来删除，这样会根据光标位置删除
+    [self.textfield deleteBackward];
+    
+    if (!self.textfield.text.length) {//==0时切换成省份键盘
+        [self reloadKeyboard];
+    }
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(HYPlateNumberKeyboard:didChanged:)]) {
+        [self.delegate HYPlateNumberKeyboard:self
+                                  didChanged:self.textfield];
     }
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(HYPlateNumberKeyboard:clickDelete:)]) {
