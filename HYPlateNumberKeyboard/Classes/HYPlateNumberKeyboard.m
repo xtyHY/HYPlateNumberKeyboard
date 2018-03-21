@@ -6,6 +6,7 @@
 //
 
 #import "HYPlateNumberKeyboard.h"
+#import "UITextField+CursorPosition.h"
 
 #define ScreenWidth  [UIScreen mainScreen].bounds.size.width
 #define ScreenHeight [UIScreen mainScreen].bounds.size.height
@@ -17,7 +18,7 @@
 #define singleW (ScreenWidth-(alineCount+1)*1)/alineCount
 #define singleH 42
 
-@interface HYPlateNumberKeyboard ()<UICollectionViewDelegate, UICollectionViewDataSource, UITextFieldDelegate>
+@interface HYPlateNumberKeyboard ()<UICollectionViewDelegate, UICollectionViewDataSource>
 
 @property (nonatomic, assign) BOOL bAlphabet;
 @property (nonatomic, strong) UICollectionView *collectionView;
@@ -27,6 +28,7 @@
 
 static NSArray<NSString *> *provinces;
 static NSArray<NSString *> *alphabets;
+static NSString *allProvinceStr;
 
 @implementation HYPlateNumberKeyboard
 
@@ -46,6 +48,7 @@ static NSArray<NSString *> *alphabets;
                       @"Q", @"R", @"S", @"T", @"U", @"V", @"W",
                       @"X", @"Y", @"Z", @"1", @"2", @"3", @"4",
                       @"5", @"6", @"7", @"8", @"9", @"0", @"挂"];
+        allProvinceStr = [provinces componentsJoinedByString:@","];
     });
     return keyboard;
 }
@@ -118,20 +121,26 @@ static NSArray<NSString *> *alphabets;
     }
     
 //    NSLog(@"---%@\n", self.dataArr[indexPath.row]);
-
-    //普通牌照7位，新能源绿牌8位
-    if (self.textfield.text.length>=8) {
-        [self.textfield.text substringToIndex:8];
-        [self.textfield endEditing:YES];
-        return;
-    }
     
     //使用UITextInput中的方法来实现插入文字，这样可以支持当前光标位置进行插入文字
     NSString *string = self.dataArr[indexPath.row];
+    
+    NSRange range = [self.textfield selectedRange];
+    if (self.textfield.text.length>1 && range.location == 0) {
+        //看下后面有没有省份，有的话，替换掉
+        NSString *firstStr = [self.textfield.text substringToIndex:1];
+        if ([allProvinceStr containsString:firstStr]) {
+            [self.textfield setSelectedRange:(NSRange){0, 1}];
+        }
+    }
     [self.textfield replaceRange:self.textfield.selectedTextRange withText:string];
     
-    if (self.textfield.text.length==1) {//>1切换成字母键盘
-        [self reloadKeyboard];
+    [self reloadKeyboard];
+    
+    //普通牌照7位，新能源绿牌8位
+    if (self.textfield.text.length>=8) {
+        self.textfield.text = [self.textfield.text substringToIndex:8];
+        [self.textfield endEditing:YES];
     }
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(HYPlateNumberKeyboard:didChanged:)]) {
@@ -141,11 +150,62 @@ static NSArray<NSString *> *alphabets;
 }
 #pragma mark - private
 - (void)reloadKeyboard {
-    self.bAlphabet = self.textfield.text.length;
-    [self.collectionView reloadData];
+    
+    NSRange range = [self.textfield selectedRange];
+    
+    if (range.location == 0) {
+        if (!self.bAlphabet) {//防止移到后面一直都在reload
+            return;
+        }
+        self.bAlphabet = NO;
+        [self.collectionView reloadData];
+    } else {
+        if (self.bAlphabet) {//防止移到后面一直都在reload
+            return;
+        }
+        self.bAlphabet = YES;
+        [self.collectionView reloadData];
+    }
 }
 
 #pragma mark - public
+- (void)setTextfield:(UITextField *)textfield {
+    _textfield = textfield;
+    [_textfield addTarget:self action:@selector(textFieldEditingBegin:) forControlEvents:UIControlEventEditingDidBegin];
+    [_textfield addTarget:self action:@selector(textFieldEditingEnd:) forControlEvents:UIControlEventEditingDidEnd];
+    [_textfield addTarget:self action:@selector(textFieldEditingChanged:) forControlEvents:UIControlEventEditingChanged];
+}
+
+- (void)textFieldEditingBegin:(UITextField *)textField {
+    [textField addObserver:self forKeyPath:@"selectedTextRange" options:NSKeyValueObservingOptionNew context:nil];
+}
+
+- (void)textFieldEditingEnd:(UITextField *)textField {
+    [textField removeObserver:self forKeyPath:@"selectedTextRange"];
+}
+
+- (void)textFieldEditingChanged:(UITextField *)textField {
+    if (textField.text.length==0) {//防止在有clear按钮的输入框点击了clear按钮
+        [self reloadKeyboard];
+    }
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    
+    if (![keyPath isEqualToString:@"selectedTextRange"]) {
+        return;
+    }
+    
+    UITextField *textfield = object;
+    UITextRange *textRange = [change valueForKey:NSKeyValueChangeNewKey];
+    
+    if (![textfield isKindOfClass:[UITextField class]] ||
+        ![textRange isKindOfClass:[UITextRange class]]) {
+        return;
+    }
+    
+    [self reloadKeyboard];
+}
 
 #pragma mark - action
 - (void)clickClose:(id)sender {
@@ -165,10 +225,7 @@ static NSArray<NSString *> *alphabets;
     
     //使用UITextInput的方法来删除，这样会根据光标位置删除
     [self.textfield deleteBackward];
-    
-    if (!self.textfield.text.length) {//==0时切换成省份键盘
-        [self reloadKeyboard];
-    }
+    [self reloadKeyboard];
     
     if (self.delegate && [self.delegate respondsToSelector:@selector(HYPlateNumberKeyboard:didChanged:)]) {
         [self.delegate HYPlateNumberKeyboard:self
@@ -194,6 +251,7 @@ static NSArray<NSString *> *alphabets;
         _collectionView.delegate = self;
         _collectionView.dataSource = self;
         _collectionView.backgroundColor = RGB(231, 231, 231);
+        _collectionView.scrollEnabled = NO;
     }
     return _collectionView;
 }
