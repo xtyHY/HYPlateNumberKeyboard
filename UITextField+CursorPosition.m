@@ -12,14 +12,14 @@
 
 @implementation UITextField(CursorPosition)
 
-- (NSRange)selectedRange{
+- (NSRange)HY_selectedRange{
     NSInteger loc = [self offsetFromPosition:self.beginningOfDocument toPosition:self.selectedTextRange.start];
     NSInteger len = [self offsetFromPosition:self.selectedTextRange.start toPosition:self.selectedTextRange.end];
     
     return NSMakeRange(loc, len);
 }
 
-- (void)setSelectedRange:(NSRange)range {
+- (void)HY_setSelectedRange:(NSRange)range {
     UITextPosition* startPosition = [self positionFromPosition:self.beginningOfDocument offset:range.location];
     UITextPosition* endPosition   = [self positionFromPosition:self.beginningOfDocument offset:range.location + range.length];
     

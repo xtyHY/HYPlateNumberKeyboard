@@ -10,9 +10,9 @@
 @interface UITextField(CursorPosition)
 
 /** 获取当前textField框选范围的range */
-- (NSRange)selectedRange;
+- (NSRange)HY_selectedRange;
 
 /** 通过range来设置textField框选范围 */
-- (void)setSelectedRange:(NSRange)range;
+- (void)HY_setSelectedRange:(NSRange)range;
 
 @end
